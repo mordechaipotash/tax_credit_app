@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@heroicons/react": "^2.1.5",
+    "@supabase/supabase-js": "^2.46.1",
+    "@types/node": "^22.9.0",
+    "googleapis": "^144.0.0",
+    "react-hot-toast": "^2.4.1",
+    "react-pdf": "^9.1.1"
+  }
+}
