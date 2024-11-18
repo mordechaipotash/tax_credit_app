@@ -56,13 +56,16 @@ export async function GET(request: Request) {
     // Execute query
     const { data: emails, error } = await query.limit(50);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
 
-    // If no emails exist yet, create some mock data
+    // If no emails exist yet, return mock data
     if (!emails || emails.length === 0) {
       const mockEmails = [
         {
-          id: '1',
+          id: crypto.randomUUID(),
           subject: 'WOTC Form Submission - John Doe',
           sender: 'john.doe@example.com',
           received_at: new Date().toISOString(),
@@ -71,7 +74,7 @@ export async function GET(request: Request) {
           confidence: 0.95
         },
         {
-          id: '2',
+          id: crypto.randomUUID(),
           subject: 'New Employee Tax Credit Documentation',
           sender: 'hr@company.com',
           received_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
@@ -80,7 +83,7 @@ export async function GET(request: Request) {
           confidence: 0.88
         },
         {
-          id: '3',
+          id: crypto.randomUUID(),
           subject: 'WOTC Application Documents',
           sender: 'recruitment@business.com',
           received_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
@@ -90,13 +93,23 @@ export async function GET(request: Request) {
         }
       ];
 
-      const { error: insertError } = await supabase
-        .from('emails')
-        .insert(mockEmails);
+      try {
+        const { error: insertError } = await supabase
+          .from('emails')
+          .insert(mockEmails);
 
-      if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Error inserting mock data:', insertError);
+          // Return mock data even if insert fails
+          return NextResponse.json({ emails: mockEmails });
+        }
 
-      return NextResponse.json({ emails: mockEmails });
+        return NextResponse.json({ emails: mockEmails });
+      } catch (insertError) {
+        console.error('Error inserting mock data:', insertError);
+        // Return mock data even if insert fails
+        return NextResponse.json({ emails: mockEmails });
+      }
     }
 
     return NextResponse.json({ emails });
@@ -115,6 +128,7 @@ export async function POST(request: Request) {
     const { text } = await request.json();
 
     const mockEmail = {
+      id: crypto.randomUUID(),
       subject: 'New WOTC Application',
       sender: 'applicant@example.com',
       received_at: new Date().toISOString(),

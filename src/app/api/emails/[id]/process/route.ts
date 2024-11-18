@@ -9,6 +9,21 @@ export async function POST(
     const supabase = createServerSupabase();
     const { id } = params;
 
+    // First check if the email exists
+    const { data: existingEmail, error: fetchError } = await supabase
+      .from('emails')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError) {
+      console.error('Error fetching email:', fetchError);
+      return NextResponse.json(
+        { error: 'Email not found' },
+        { status: 404 }
+      );
+    }
+
     // Simulate processing delay
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -24,7 +39,10 @@ export async function POST(
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error updating email:', error);
+      throw error;
+    }
 
     return NextResponse.json({ success: true, email: data });
   } catch (error) {
