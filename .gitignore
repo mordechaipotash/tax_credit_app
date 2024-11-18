@@ -38,3 +38,6 @@ next-env.d.ts
 # Backup files
 /backup/
 /old_files_for_insparation/
+
+# Local Netlify folder
+.netlify
