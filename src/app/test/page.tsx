@@ -1,12 +1,12 @@
-import DashboardLayout from '@/components/layout/DashboardLayout';
+'use client';
+
 import ClassificationTest from '@/components/classification/ClassificationTest';
 
 export default function TestPage() {
   return (
-    <DashboardLayout>
-      <div className="max-w-4xl mx-auto">
-        <ClassificationTest />
-      </div>
-    </DashboardLayout>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-4">Test Classification</h1>
+      <ClassificationTest />
+    </div>
   );
 }

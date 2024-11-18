@@ -10,7 +10,14 @@ import EmailSearch from './EmailSearch';
 import EmailBulkActions from './EmailBulkActions';
 import toast from 'react-hot-toast';
 
-type Email = Database['public']['Tables']['emails']['Row'];
+interface Email {
+  id: string;
+  subject: string;
+  sender: string;
+  received_at: string;
+  processed: boolean;
+  processing_error?: string;
+}
 
 export default function EmailList() {
   const [emails, setEmails] = useState<Email[]>([]);
@@ -21,8 +28,8 @@ export default function EmailList() {
   const [filters, setFilters] = useState<FilterTypes>({
     status: 'all',
     dateRange: 'week',
-    startDate: null,
-    endDate: null
+    startDate: undefined,
+    endDate: undefined
   });
 
   useEffect(() => {
