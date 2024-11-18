@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import ToastProvider from '@/components/ui/ToastProvider';
+import { Toaster } from 'react-hot-toast';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'WOTC Processing',
-  description: 'Work Opportunity Tax Credit Processing System',
+  title: 'WOTC Tax Credit Processing',
+  description: 'Process WOTC tax credit forms efficiently',
 };
 
 export default function RootLayout({
@@ -18,8 +18,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
+        <Toaster position="top-right" />
         {children}
-        <ToastProvider />
       </body>
     </html>
   );
