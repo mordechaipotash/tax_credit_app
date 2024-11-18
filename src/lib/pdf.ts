@@ -2,8 +2,9 @@ import * as pdfjs from 'pdfjs-dist';
 import { TextItem } from 'pdfjs-dist/types/src/display/api';
 
 // Initialize PDF.js worker
-const pdfjsWorker = require('pdfjs-dist/build/pdf.worker.entry');
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+if (typeof window !== 'undefined') {
+  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+}
 
 interface ExtractedPage {
   pageNumber: number;
@@ -73,7 +74,7 @@ export async function extractTextFromPDF(file: File): Promise<ExtractedPage[]> {
 
 export function cleanExtractedText(text: string): string {
   return text
-    .replace(/\\s+/g, ' ') // Replace multiple spaces with single space
-    .replace(/\\n\\s*\\n/g, '\\n') // Replace multiple newlines with single newline
+    .replace(/\\s+/g, ' ')
+    .replace(/\\n\\s*\\n/g, '\\n')
     .trim();
 }
