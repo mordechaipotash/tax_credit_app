@@ -5,9 +5,9 @@ import { FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 export interface EmailFilters {
   status?: 'all' | 'processed' | 'pending';
-  dateRange?: 'today' | 'week' | 'month' | 'custom';
-  startDate?: Date;
-  endDate?: Date;
+  dateRange?: 'day' | 'week' | 'month' | 'custom';
+  startDate?: string;
+  endDate?: string;
 }
 
 interface EmailFiltersProps {
@@ -21,14 +21,32 @@ export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
     dateRange: 'week'
   });
 
-  const handleFilterChange = (key: keyof EmailFilters, value: any) => {
-    const newFilters = { ...filters, [key]: value };
+  const handleStatusChange = (status: EmailFilters['status']) => {
+    const newFilters = { ...filters, status };
     setFilters(newFilters);
     onFilterChange(newFilters);
   };
 
-  const clearFilters = () => {
-    const defaultFilters = {
+  const handleDateRangeChange = (dateRange: EmailFilters['dateRange']) => {
+    const newFilters = { ...filters, dateRange };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const handleStartDateChange = (startDate: string) => {
+    const newFilters = { ...filters, startDate };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const handleEndDateChange = (endDate: string) => {
+    const newFilters = { ...filters, endDate };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const resetFilters = () => {
+    const defaultFilters: EmailFilters = {
       status: 'all',
       dateRange: 'week'
     };
@@ -52,7 +70,7 @@ export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-medium text-gray-900">Filters</h3>
               <button
-                onClick={clearFilters}
+                onClick={resetFilters}
                 className="text-xs text-gray-500 hover:text-gray-700"
               >
                 Clear all
@@ -67,7 +85,7 @@ export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
                 </label>
                 <select
                   value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  onChange={(e) => handleStatusChange(e.target.value as EmailFilters['status'])}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
                   <option value="all">All</option>
@@ -83,12 +101,12 @@ export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
                 </label>
                 <select
                   value={filters.dateRange}
-                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  onChange={(e) => handleDateRangeChange(e.target.value as EmailFilters['dateRange'])}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                 >
-                  <option value="today">Today</option>
-                  <option value="week">Last 7 days</option>
-                  <option value="month">Last 30 days</option>
+                  <option value="day">Last 24 Hours</option>
+                  <option value="week">Last Week</option>
+                  <option value="month">Last Month</option>
                   <option value="custom">Custom Range</option>
                 </select>
               </div>
@@ -101,8 +119,8 @@ export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
                     </label>
                     <input
                       type="date"
-                      value={filters.startDate?.toISOString().split('T')[0]}
-                      onChange={(e) => handleFilterChange('startDate', new Date(e.target.value))}
+                      value={filters.startDate}
+                      onChange={(e) => handleStartDateChange(e.target.value)}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
@@ -112,8 +130,8 @@ export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
                     </label>
                     <input
                       type="date"
-                      value={filters.endDate?.toISOString().split('T')[0]}
-                      onChange={(e) => handleFilterChange('endDate', new Date(e.target.value))}
+                      value={filters.endDate}
+                      onChange={(e) => handleEndDateChange(e.target.value)}
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                     />
                   </div>
