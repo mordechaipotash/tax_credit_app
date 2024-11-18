@@ -1,146 +1,120 @@
 'use client';
 
-import { useState } from 'react';
-import { FunnelIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Fragment } from 'react';
+import { Menu, Transition } from '@headlessui/react';
+import { ChevronDownIcon, FunnelIcon } from '@heroicons/react/20/solid';
+import { CalendarIcon } from '@heroicons/react/24/outline';
+import classNames from 'classnames';
 
 export interface EmailFilters {
-  status?: 'all' | 'processed' | 'pending';
-  dateRange?: 'day' | 'week' | 'month' | 'custom';
+  status: 'all' | 'processed' | 'pending';
+  dateRange: 'day' | 'week' | 'month' | 'custom';
   startDate?: string;
   endDate?: string;
 }
 
-interface EmailFiltersProps {
+interface Props {
+  filters: EmailFilters;
   onFilterChange: (filters: EmailFilters) => void;
 }
 
-export default function EmailFilters({ onFilterChange }: EmailFiltersProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [filters, setFilters] = useState<EmailFilters>({
-    status: 'all',
-    dateRange: 'week'
-  });
+export default function EmailFilters({ filters, onFilterChange }: Props) {
+  const dateRangeOptions = [
+    { key: 'day', name: 'Last 24 Hours' },
+    { key: 'week', name: 'Last 7 Days' },
+    { key: 'month', name: 'Last 30 Days' },
+    { key: 'custom', name: 'Custom Range' },
+  ];
 
-  const handleStatusChange = (status: EmailFilters['status']) => {
-    const newFilters = { ...filters, status };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
-  const handleDateRangeChange = (dateRange: EmailFilters['dateRange']) => {
-    const newFilters = { ...filters, dateRange };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
-  const handleStartDateChange = (startDate: string) => {
-    const newFilters = { ...filters, startDate };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
-  const handleEndDateChange = (endDate: string) => {
-    const newFilters = { ...filters, endDate };
-    setFilters(newFilters);
-    onFilterChange(newFilters);
-  };
-
-  const resetFilters = () => {
-    const defaultFilters: EmailFilters = {
-      status: 'all',
-      dateRange: 'week'
-    };
-    setFilters(defaultFilters);
-    onFilterChange(defaultFilters);
-  };
+  const statusOptions = [
+    { key: 'all', name: 'All' },
+    { key: 'processed', name: 'Processed' },
+    { key: 'pending', name: 'Pending' },
+  ];
 
   return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-      >
-        <FunnelIcon className="h-4 w-4 mr-2" />
-        Filters
-      </button>
-
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-          <div className="p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-medium text-gray-900">Filters</h3>
-              <button
-                onClick={resetFilters}
-                className="text-xs text-gray-500 hover:text-gray-700"
-              >
-                Clear all
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {/* Status Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Status
-                </label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleStatusChange(e.target.value as EmailFilters['status'])}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="all">All</option>
-                  <option value="processed">Processed</option>
-                  <option value="pending">Pending</option>
-                </select>
-              </div>
-
-              {/* Date Range Filter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date Range
-                </label>
-                <select
-                  value={filters.dateRange}
-                  onChange={(e) => handleDateRangeChange(e.target.value as EmailFilters['dateRange'])}
-                  className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                >
-                  <option value="day">Last 24 Hours</option>
-                  <option value="week">Last Week</option>
-                  <option value="month">Last Month</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-              </div>
-
-              {filters.dateRange === 'custom' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Start Date
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.startDate}
-                      onChange={(e) => handleStartDateChange(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      End Date
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.endDate}
-                      onChange={(e) => handleEndDateChange(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+    <div className="flex flex-col sm:flex-row gap-4">
+      {/* Status Filter */}
+      <Menu as="div" className="relative inline-block text-left">
+        <div>
+          <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            <FunnelIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+            Status: {statusOptions.find(s => s.key === filters.status)?.name}
+            <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
+          </Menu.Button>
         </div>
-      )}
+
+        <Transition
+          as={Fragment}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
+        >
+          <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <div className="py-1">
+              {statusOptions.map((option) => (
+                <Menu.Item key={option.key}>
+                  {({ active }) => (
+                    <button
+                      onClick={() => onFilterChange({ ...filters, status: option.key as EmailFilters['status'] })}
+                      className={classNames(
+                        active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                        'block w-full px-4 py-2 text-left text-sm'
+                      )}
+                    >
+                      {option.name}
+                    </button>
+                  )}
+                </Menu.Item>
+              ))}
+            </div>
+          </Menu.Items>
+        </Transition>
+      </Menu>
+
+      {/* Date Range Filter */}
+      <Menu as="div" className="relative inline-block text-left">
+        <div>
+          <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+            <CalendarIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+            {dateRangeOptions.find(d => d.key === filters.dateRange)?.name}
+            <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
+          </Menu.Button>
+        </div>
+
+        <Transition
+          as={Fragment}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
+        >
+          <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <div className="py-1">
+              {dateRangeOptions.map((option) => (
+                <Menu.Item key={option.key}>
+                  {({ active }) => (
+                    <button
+                      onClick={() => onFilterChange({ ...filters, dateRange: option.key as EmailFilters['dateRange'] })}
+                      className={classNames(
+                        active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                        'block w-full px-4 py-2 text-left text-sm'
+                      )}
+                    >
+                      {option.name}
+                    </button>
+                  )}
+                </Menu.Item>
+              ))}
+            </div>
+          </Menu.Items>
+        </Transition>
+      </Menu>
     </div>
   );
 }

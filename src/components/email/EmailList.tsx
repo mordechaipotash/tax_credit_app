@@ -1,14 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Database } from '@/types/database';
-import { EnvelopeIcon, DocumentIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
-import EmailDetail from './EmailDetail';
-import EmailFilters, { EmailFilters as FilterTypes } from './EmailFilters';
-import EmailSearch from './EmailSearch';
-import EmailBulkActions from './EmailBulkActions';
-import toast from 'react-hot-toast';
+import { DocumentTextIcon, CheckCircleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { EmailFilters } from './EmailFilters';
+import { formatDistanceToNow } from 'date-fns';
 
 interface Email {
   id: string;
@@ -16,212 +11,128 @@ interface Email {
   sender: string;
   received_at: string;
   processed: boolean;
-  processing_error?: string;
+  form_type?: string;
+  confidence?: number;
 }
 
-export default function EmailList() {
+interface Props {
+  filters: EmailFilters;
+}
+
+export default function EmailList({ filters }: Props) {
   const [emails, setEmails] = useState<Email[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<FilterTypes>({
-    status: 'all',
-    dateRange: 'week',
-    startDate: undefined,
-    endDate: undefined
-  });
+  const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEmails();
-  }, [filters, searchQuery]);
+  }, [filters]);
 
   const fetchEmails = async () => {
     try {
-      let query = supabase
-        .from('emails')
-        .select('*')
-        .order('received_at', { ascending: false });
-
-      // Apply search
-      if (searchQuery) {
-        query = query.or(`subject.ilike.%${searchQuery}%,sender.ilike.%${searchQuery}%`);
-      }
-
-      // Apply status filter
-      if (filters.status === 'processed') {
-        query = query.eq('processed', true);
-      } else if (filters.status === 'pending') {
-        query = query.eq('processed', false);
-      }
-
-      // Apply date filter
-      const now = new Date();
-      let startDate: Date;
-      let endDate = new Date();
-
-      switch (filters.dateRange) {
-        case 'day':
-          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-          break;
-        case 'week':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-          break;
-        case 'month':
-          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-          break;
-        case 'custom':
-          startDate = filters.startDate ? new Date(filters.startDate) : new Date(0);
-          endDate = filters.endDate ? new Date(filters.endDate) : new Date();
-          break;
-        default:
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      }
-
-      if (filters.dateRange !== 'custom') {
-        query = query.gte('received_at', startDate.toISOString());
-      } else {
-        query = query.gte('received_at', startDate.toISOString()).lte('received_at', endDate.toISOString());
-      }
-
-      const { data, error } = await query.limit(50);
-
-      if (error) throw error;
-      setEmails(data || []);
+      setLoading(true);
+      const response = await fetch('/api/emails');
+      if (!response.ok) throw new Error('Failed to fetch emails');
+      const data = await response.json();
+      setEmails(data.emails);
     } catch (error) {
       console.error('Error fetching emails:', error);
-      toast.error('Failed to fetch emails');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBulkProcess = async (ids: string[]) => {
+  const handleProcess = async (emailId: string) => {
     try {
-      const { error } = await supabase
-        .from('emails')
-        .update({ processed: true })
-        .in('id', ids);
-
-      if (error) throw error;
-      fetchEmails();
+      const response = await fetch(`/api/emails/${emailId}/process`, {
+        method: 'POST'
+      });
+      if (!response.ok) throw new Error('Failed to process email');
+      await fetchEmails();
     } catch (error) {
-      console.error('Error processing emails:', error);
-      throw error;
+      console.error('Error processing email:', error);
     }
   };
 
-  const handleBulkMarkAsRead = async (ids: string[]) => {
-    // Implement mark as read functionality
-    console.log('Mark as read:', ids);
-  };
+  if (loading) {
+    return (
+      <div className="text-center py-12">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-indigo-600"></div>
+        <p className="mt-2 text-sm text-gray-500">Loading emails...</p>
+      </div>
+    );
+  }
 
-  const handleEmailSelection = (emailId: string, selected: boolean) => {
-    if (selected) {
-      setSelectedIds((prev) => [...prev, emailId]);
-    } else {
-      setSelectedIds((prev) => prev.filter(id => id !== emailId));
-    }
-  };
+  if (emails.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <DocumentTextIcon className="mx-auto h-12 w-12 text-gray-400" />
+        <h3 className="mt-2 text-sm font-semibold text-gray-900">No emails</h3>
+        <p className="mt-1 text-sm text-gray-500">No emails found matching your filters.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-        <h2 className="text-lg font-medium text-gray-900">
-          Emails ({emails.length})
-        </h2>
-        <div className="flex items-center space-x-4">
-          <div className="w-64">
-            <EmailSearch onSearch={setSearchQuery} />
-          </div>
-          <EmailFilters onFilterChange={setFilters} />
-        </div>
-      </div>
-
-      <EmailBulkActions
-        selectedIds={selectedIds}
-        onProcess={handleBulkProcess}
-        onMarkAsRead={handleBulkMarkAsRead}
-        onClearSelection={() => setSelectedIds([])}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          {loading ? (
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-20 bg-gray-200 rounded"></div>
-              ))}
-            </div>
-          ) : (
-            emails.map((email) => (
-              <div
-                key={email.id}
-                className={`bg-white shadow rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer
-                  ${selectedEmailId === email.id ? 'ring-2 ring-indigo-500' : ''}`}
-              >
-                <div className="flex items-start">
-                  <div className="flex-shrink-0 mr-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.includes(email.id)}
-                      onChange={(e) => handleEmailSelection(email.id, e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-                  <div 
-                    className="flex-1"
-                    onClick={() => setSelectedEmailId(email.id)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                          <EnvelopeIcon className="h-6 w-6 text-gray-400" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-gray-900">
-                            {email.subject || 'No Subject'}
-                          </h4>
-                          <p className="text-sm text-gray-500">{email.sender}</p>
-                          <div className="mt-1 flex items-center space-x-2">
-                            <DocumentIcon className="h-4 w-4 text-gray-400" />
-                            <span className="text-xs text-gray-500">
-                              {new Date(email.received_at).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        {email.processed ? (
-                          <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <XCircleIcon className="h-5 w-5 text-yellow-500" />
-                        )}
-                      </div>
-                    </div>
-                    {email.processing_error && (
-                      <div className="mt-2 text-sm text-red-600">
-                        Error: {email.processing_error}
-                      </div>
-                    )}
+    <div className="overflow-hidden bg-white shadow sm:rounded-lg">
+      <ul role="list" className="divide-y divide-gray-200">
+        {emails.map((email) => (
+          <li
+            key={email.id}
+            className={`p-4 hover:bg-gray-50 cursor-pointer ${
+              selectedEmail === email.id ? 'bg-gray-50' : ''
+            }`}
+            onClick={() => setSelectedEmail(email.id)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center min-w-0 gap-x-4">
+                <div className="flex-shrink-0">
+                  {email.processed ? (
+                    <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                  ) : (
+                    <ClockIcon className="h-6 w-6 text-yellow-500" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-auto">
+                  <p className="text-sm font-semibold leading-6 text-gray-900">
+                    {email.subject}
+                  </p>
+                  <div className="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
+                    <p className="truncate">{email.sender}</p>
+                    <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
+                      <circle cx={1} cy={1} r={1} />
+                    </svg>
+                    <p>{formatDistanceToNow(new Date(email.received_at), { addSuffix: true })}</p>
                   </div>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-        
-        <div className="lg:border-l lg:border-gray-200 lg:pl-6">
-          {selectedEmailId ? (
-            <EmailDetail emailId={selectedEmailId} />
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-500">Select an email to view details</p>
+              <div className="flex flex-col items-end ml-4">
+                {email.form_type && (
+                  <p className="text-sm text-gray-900">
+                    Form {email.form_type}
+                    {email.confidence && (
+                      <span className="ml-2 text-xs text-gray-500">
+                        ({Math.round(email.confidence * 100)}% confidence)
+                      </span>
+                    )}
+                  </p>
+                )}
+                {!email.processed && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleProcess(email.id);
+                    }}
+                    className="mt-2 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    Process
+                  </button>
+                )}
+              </div>
             </div>
-          )}
-        </div>
-      </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
