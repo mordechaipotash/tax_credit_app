@@ -5,9 +5,6 @@ const nextConfig = {
     unoptimized: true,
     domains: ['lhrtmhuckmfipnjnffna.supabase.co'],
   },
-  experimental: {
-    serverActions: true,
-  },
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;
