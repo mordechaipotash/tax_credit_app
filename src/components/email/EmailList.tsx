@@ -20,7 +20,9 @@ export default function EmailList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState<FilterTypes>({
     status: 'all',
-    dateRange: 'week'
+    dateRange: 'week',
+    startDate: null,
+    endDate: null
   });
 
   useEffect(() => {
@@ -49,30 +51,30 @@ export default function EmailList() {
       // Apply date filter
       const now = new Date();
       let startDate: Date;
+      let endDate = new Date();
 
       switch (filters.dateRange) {
-        case 'today':
-          startDate = new Date(now.setHours(0, 0, 0, 0));
+        case 'day':
+          startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
           break;
         case 'week':
-          startDate = new Date(now.setDate(now.getDate() - 7));
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
         case 'month':
-          startDate = new Date(now.setDate(now.getDate() - 30));
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           break;
         case 'custom':
-          if (filters.startDate && filters.endDate) {
-            query = query
-              .gte('received_at', filters.startDate.toISOString())
-              .lte('received_at', filters.endDate.toISOString());
-          }
+          startDate = filters.startDate ? new Date(filters.startDate) : new Date(0);
+          endDate = filters.endDate ? new Date(filters.endDate) : new Date();
           break;
         default:
-          startDate = new Date(now.setDate(now.getDate() - 7));
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       }
 
       if (filters.dateRange !== 'custom') {
         query = query.gte('received_at', startDate.toISOString());
+      } else {
+        query = query.gte('received_at', startDate.toISOString()).lte('received_at', endDate.toISOString());
       }
 
       const { data, error } = await query.limit(50);
